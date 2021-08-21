@@ -1,7 +1,7 @@
 from django.urls import path
 
-from subscription.views import SubscriptionCard
+from subscription.views import PurchaseCredits
 
 urlpatterns = [
-    path('purchase/', SubscriptionCard.as_view(), name='subscription'),
+    path('purchase/', PurchaseCredits.as_view(), name='purchase_credits'),
 ]

@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 
 import stripe
@@ -15,7 +16,7 @@ stripe.api_key = settings.STRIPE_API_KEY
 User = get_user_model()
 
 
-class SubscriptionCard(ListCreateAPIView):
+class PurchaseCredits(ListCreateAPIView):
     serializer_class = CardDetailSerializer
     queryset = User.objects.none
 
@@ -28,6 +29,11 @@ class SubscriptionCard(ListCreateAPIView):
             serializer = CardDetailSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             data = serializer.data
+            if data.get("amount") < 500:
+                return Response(status=status.HTTP_200_OK, data={
+                    "ok": False,
+                    "error": "Minimum amount to purchase credits would be greater than $0.50",
+                })
             try:
                 token = stripe.Token.create(
                     card={
@@ -58,7 +64,7 @@ class SubscriptionCard(ListCreateAPIView):
                         currency="usd",
                         payment_method_types=["card"],
                         customer=customer.id,
-                        description='Added cash',
+                        description=f'Added cash to purchase for credits for {user.email}',
                     )
                     stripe.PaymentIntent.confirm(
                         pi.id,
@@ -66,11 +72,14 @@ class SubscriptionCard(ListCreateAPIView):
                     )
                     if pi.id:
                         try:
-                            credits_purchased = (data.get("amount") / 100) * 4
-                            user.credits += credits_purchased
+                            user.credits += int((data.get("amount") / 100) * 4)
                             user.save()
                         except Exception as e:
                             print(e)
+                            return Response(status=status.HTTP_200_OK, data={
+                                "ok": False,
+                                "error": "Error while updating the credits, Please contact to support, ASAP."
+                            })
                     return Response(status=status.HTTP_200_OK, data={
                         "ok": True,
                         "error": None,
