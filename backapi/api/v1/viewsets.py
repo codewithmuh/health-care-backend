@@ -10,7 +10,6 @@ class MeasurementViewSets(ModelViewSet):
     serializer_class = MeasurementSerializer
     filterset_fields = ['category']
 
-
     def get_queryset(self):
         queryset = Measurement.objects.filter(user=self.request.user)
         return queryset

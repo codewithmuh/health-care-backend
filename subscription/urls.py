@@ -1,9 +1,7 @@
 from django.urls import path
 
-from subscription.views import SubscriptionCard, SubscriptionCancel, SubscriptionActivate
+from subscription.views import SubscriptionCard
 
 urlpatterns = [
-    path('subscription/', SubscriptionCard.as_view(), name='subscription'),
-    path('subscription-cancel/', SubscriptionCancel.as_view(), name='subscription_cancel'),
-    path('subscription-activate/', SubscriptionActivate.as_view(), name='subscription_activate'),
+    path('purchase/', SubscriptionCard.as_view(), name='subscription'),
 ]

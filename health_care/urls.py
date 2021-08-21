@@ -9,9 +9,9 @@ from django.conf.urls.static import static
 
 # swagger
 api_info = openapi.Info(
-    title="Port Pass API",
+    title="Health Care API",
     default_version="v1",
-    description="API documentation for Port pass App",
+    description="API documentation for Health Care App",
 )
 
 schema_view = get_schema_view(

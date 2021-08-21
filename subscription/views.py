@@ -9,7 +9,7 @@ from djstripe.models import Plan, Subscription, Customer, PaymentMethod
 from rest_framework import status
 from rest_framework.generics import ListCreateAPIView
 from rest_framework.response import Response
-from subscription.serializers import CardDetailSerializer, SubscriptionCancelSerializer, SubscriptionActivateSerializer
+from subscription.serializers import CardDetailSerializer
 
 stripe.api_key = settings.STRIPE_API_KEY
 User = get_user_model()
@@ -31,18 +31,16 @@ class SubscriptionCard(ListCreateAPIView):
             try:
                 token = stripe.Token.create(
                     card={
-                        "card_holder": data.get("card_holder"),
-                        "number": data.get("credit_card_number"),
-                        "exp_date": data.get("exp_date"),
-                        "cvc": data.get("card_cvv"),
-                        "deposit_amount": data.get("deposit_amount")
+                        "number": data.get("card_number"),
+                        "exp_month": data.get("card_exp_month"),
+                        "exp_year": data.get("card_exp_year"),
+                        "cvc": data.get("card_cvv")
                     }, )
                 try:
                     customer = Customer.objects.filter(subscriber=request.user).first()
                 except Customer.DoesNotExist:
                     customer = Customer.create(subscriber=request.user)
                     customer.save()
-                    customer.api_retrieve()
                 print(customer.default_payment_method)
                 try:
                     payment_method = stripe.PaymentMethod.create(
@@ -51,41 +49,38 @@ class SubscriptionCard(ListCreateAPIView):
                     )
                     card = customer.add_payment_method(
                         payment_method=payment_method.id, set_default=True)
-                    print(card)
+                    customer.api_retrieve()
                 except stripe.error.CardError as e:
                     print(e)
-                # try:
-                #     old_payment_methods = customer.payment_methods.filter(~Q(id=customer.default_payment_method.id))
-                #     # print(old_payment_methods)
-                #     old_payment_methods.delete()
-                #
-                # except PaymentMethod.DoesNotExist:
-                #     pass
-
-                plan = Plan.objects.first()
-                if plan:
-                    arguments = {
-                        "customer": customer.id,
-                        "items": [
-                            {
-                                "plan": plan.id,
-                            },
-                        ]
-                    }
-                    subscription = stripe.Subscription.create(**arguments)
-                    user.subscription_id = subscription.id
-                    user.is_subscription_active = True
-                    user.card_number = f"**** **** **** {data.get('credit_card_number')[-4:]}"
-                    now = timezone.now().date()
-                    user.renew_date = now
-                    if plan.trial_period_days:
-                        user.renew_date = now + timedelta(days=plan.trial_period_days)
-                    user.save()
-                return Response(status=status.HTTP_200_OK, data={
-                    "ok": True,
-                    "error": None,
-                    "message": "Created"
-                })
+                try:
+                    pi = stripe.PaymentIntent.create(
+                        amount=int(data.get("amount")),
+                        currency="usd",
+                        payment_method_types=["card"],
+                        customer=customer.id,
+                        description='Added cash',
+                    )
+                    stripe.PaymentIntent.confirm(
+                        pi.id,
+                        payment_method=customer.payment_methods.first().id,
+                    )
+                    if pi.id:
+                        try:
+                            credits_purchased = (data.get("amount") / 100) * 4
+                            user.credits += credits_purchased
+                            user.save()
+                        except Exception as e:
+                            print(e)
+                    return Response(status=status.HTTP_200_OK, data={
+                        "ok": True,
+                        "error": None,
+                        "amount": user.credits
+                    })
+                except Exception as err:
+                    return Response(status=status.HTTP_400_BAD_REQUEST, data={
+                        "ok": False,
+                        "error": str(err),
+                    })
             except stripe.error.CardError as e:
                 body = e.json_body
                 err = body.get('error', {})
@@ -101,79 +96,3 @@ class SubscriptionCard(ListCreateAPIView):
                     "message": "Invalid Card Detail"
                 })
         return Response({"error": "Please login first."}, status=status.HTTP_403_FORBIDDEN)
-
-
-class SubscriptionCancel(ListCreateAPIView):
-    serializer_class = SubscriptionCancelSerializer
-    queryset = User.objects.none
-
-    def get(self, request, *args, **kwargs):
-        return Response()
-
-    def post(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            user = request.user
-            stripe_customer = Customer.objects.filter(subscriber=user).first()
-
-            if stripe_customer:
-                try:
-                    stripe.Subscription.modify(
-                        user.subscription_id,
-                        cancel_at_period_end=True
-                    )
-                    user.is_subscription_active = False
-                    user.save()
-                    return Response(status=status.HTTP_200_OK, data={
-                        "ok": True,
-                        "error": None,
-                    })
-                except Exception as err:
-                    return Response(status=status.HTTP_400_BAD_REQUEST, data={
-                        "ok": False,
-                        "error": str(err),
-                    })
-            else:
-                return Response(status=status.HTTP_404_NOT_FOUND, data={
-                    "ok": False,
-                    "error": "Customer Does not exist.",
-                })
-        return Response({"error": "Please login first."}, status=status.HTTP_403_FORBIDDEN)
-
-
-class SubscriptionActivate(ListCreateAPIView):
-    serializer_class = SubscriptionActivateSerializer
-    queryset = User.objects.none
-
-    def get(self, request, *args, **kwargs):
-        return Response()
-
-    def post(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            user = request.user
-            stripe_customer = Customer.objects.get(subscriber=user)
-
-            if stripe_customer:
-                try:
-                    stripe.Subscription.modify(
-                        user.subscription_id,
-                        cancel_at_period_end=False
-                    )
-                    user.is_subscription_active = True
-                    user.save()
-                    return Response(status=status.HTTP_200_OK, data={
-                        "ok": True,
-                        "error": None,
-                    })
-                except Exception as err:
-                    return Response(status=status.HTTP_400_BAD_REQUEST, data={
-                        "ok": False,
-                        "error": str(err),
-                    })
-            else:
-                return Response(status=status.HTTP_404_NOT_FOUND, data={
-                    "ok": False,
-                    "error": "Customer Does not exist.",
-                })
-        return Response({"error": "Please login first."}, status=status.HTTP_403_FORBIDDEN)
-
-

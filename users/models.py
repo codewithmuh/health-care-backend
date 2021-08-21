@@ -40,7 +40,7 @@ class User(AbstractUser):
     image = models.ImageField(upload_to="profile/", null=True, blank=True)
     dob = models.DateField(verbose_name="Date of Birth", null=True, blank=True)
     gender = models.CharField(max_length=20, choices=GENDER_CHOICES, default="male")
-    credits = models.PositiveIntegerField(default=10)
+    credits = models.PositiveIntegerField(default=0)
 
     def get_absolute_url(self):
         return reverse("users:detail", kwargs={"username": self.username})
