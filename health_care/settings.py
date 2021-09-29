@@ -312,3 +312,13 @@ DJSTRIPE_USE_NATIVE_JSONFIELD = False  # We recommend setting to True for new in
 DJSTRIPE_FOREIGN_KEY_TO_FIELD = "id"  # Set to `"id"` for all new 2.4+ installations
 
 
+# mail integrations
+EMAIL_HOST = "mailosaur.net"
+SMTP_Port = 2525
+EMAIL_HOST_USER = "bkvesfzg@mailosaur.net"
+DEFAULT_FROM_EMAIL = "bkvesfzg@mailosaur.net"
+EMAIL_HOST_PASSWORD = "ZmFoOBR0uuez4XYQ"
+EMAIL_PORT = 587
+POP3_Port = 110
+EMAIL_USE_TLS = True
+

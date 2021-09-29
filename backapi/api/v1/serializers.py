@@ -17,3 +17,4 @@ class MeasurementSerializer(serializers.ModelSerializer):
             credit_to_deduct = threshold.amount
         if user.credits <= credit_to_deduct:
             raise serializers.ValidationError({"user": f"Must have {credit_to_deduct} credits, please purchase first."})
+        return cleaned_data
