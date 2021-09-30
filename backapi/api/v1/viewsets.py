@@ -1,4 +1,4 @@
-from rest_framework import filters
+from rest_framework import filters, permissions
 from rest_framework.viewsets import ModelViewSet
 from .serializers import MeasurementSerializer
 from backapi.models import Measurement
@@ -15,6 +15,7 @@ class StandardResultSetPagination(PageNumberPagination):
 class MeasurementViewSets(ModelViewSet):
     queryset = Measurement.objects.none()
     serializer_class = MeasurementSerializer
+    permission_classes = [permissions.IsAuthenticated]
     filterset_fields = ['category']
 
     def get_queryset(self):
