@@ -1,3 +1,4 @@
+import copy
 import json
 
 from rest_framework.renderers import JSONRenderer
@@ -17,8 +18,12 @@ class ApiRenderer(JSONRenderer):
             response["status"] = "false"
             response["data"] = None
             try:
-                response["message"] = data
-            except KeyError:
+                keys = data.keys()
+                for key in keys:
+                    response["message"] = data.get(key)[0]
+                    break
+            except Exception as e:
+                print(e)
                 response["data"] = None
 
         return super(ApiRenderer, self).render(response, accepted_media_type, renderer_context)
