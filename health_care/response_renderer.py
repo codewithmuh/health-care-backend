@@ -20,7 +20,10 @@ class ApiRenderer(JSONRenderer):
             try:
                 keys = data.keys()
                 for key in keys:
-                    response["message"] = data.get(key)[0]
+                    if isinstance(data.get(key), list):
+                        response["message"] = data.get(key)[0]
+                    elif isinstance(data.get(key), str):
+                        response["message"] = data.get(key)
                     break
             except Exception as e:
                 print(e)
