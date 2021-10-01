@@ -1,4 +1,6 @@
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework.authtoken.serializers import AuthTokenSerializer
+from rest_framework.decorators import action
 from rest_framework.viewsets import ModelViewSet, ViewSet, ReadOnlyModelViewSet
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
@@ -9,7 +11,7 @@ from users.api.v1.serializers import (
     SignupSerializer,
     UserSerializer,
     UserProfileSerializer,
-    APKBuildSerializer
+    APKBuildSerializer, ReSendSerializer
 )
 
 
@@ -20,6 +22,14 @@ class SignupViewSet(ModelViewSet):
     serializer_class = SignupSerializer
     queryset = User.objects.none()
     http_method_names = ["post", "option"]
+
+    @swagger_auto_schema(request_body=ReSendSerializer)
+    @action(methods=['post'], detail=False, url_path='re-send', url_name='re-send')
+    def re_send(self, request, *args, **kwargs):
+        response = "Email sent!"
+        serializer = ReSendSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        return Response(response)
 
 
 class LoginViewSet(ViewSet):

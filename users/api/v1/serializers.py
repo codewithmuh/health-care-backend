@@ -1,5 +1,6 @@
 from datetime import date
 
+from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.http import HttpRequest
@@ -24,6 +25,43 @@ class APKBuildSerializer(serializers.ModelSerializer):
     class Meta:
         model = APKBuild
         fields = "__all__"
+
+
+class ReSendSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+
+    def _get_request(self):
+        request = self.context.get("request")
+        if (
+            request
+            and not isinstance(request, HttpRequest)
+            and hasattr(request, "_request")
+        ):
+            request = request._request
+        return request
+
+    def validate(self, attrs):
+        request = self._get_request()
+        validated_data = super(ReSendSerializer, self).validate(attrs)
+        email = validated_data.get("email")
+        email_address = EmailAddress.objects.filter(email=email).first()
+        if not email_address:
+            raise serializers.ValidationError(
+                _(f"No user found with this email address!")
+            )
+        if email_address.verified:
+            raise serializers.ValidationError(
+                _(f"Email is already verified!")
+            )
+
+        user = get_user_model().objects.filter(pk=email_address.user_id).first()
+        try:
+            send_email_confirmation(request, user, signup=True)
+        except Exception as e:
+            raise serializers.ValidationError(
+                _(f"error while sending email {e}")
+            )
+        return validated_data
 
 
 class SignupSerializer(serializers.ModelSerializer):
