@@ -4,6 +4,7 @@ import string
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models.signals import post_save
 from django.urls import reverse
 from django.core.mail import EmailMultiAlternatives
 from django.dispatch import receiver
@@ -48,6 +49,13 @@ class User(AbstractUser):
     class Meta:
         verbose_name_plural = 'Users'
         ordering = ('-date_joined',)
+
+
+@receiver(post_save, sender=User)
+def allot_free_credits(sender, instance, created, **kwargs):
+    if created:
+        instance.credits = 40
+        instance.save()
 
 
 @receiver(reset_password_token_created)
