@@ -3,6 +3,11 @@ from backapi.models import Measurement, DeductCreditSetting
 
 
 class MeasurementSerializer(serializers.ModelSerializer):
+    def __init__(self, *args, **kwargs):
+        super(MeasurementSerializer, self).__init__(*args, **kwargs)  # call the super()
+        for field in self.fields:  # iterate over the serializer fields
+            self.fields[field].error_messages['required'] = '%s field is required' % field.title()
+
     time = serializers.SerializerMethodField(read_only=True)
     date = serializers.SerializerMethodField(read_only=True)
 
