@@ -30,21 +30,20 @@ class HistoryAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        response = {}
+        response = []
         respiratory = self.request.user.user_measurements.filter(category="respiratory").first()
         oxygen = self.request.user.user_measurements.filter(category="oxygen").first()
         heart_rate = self.request.user.user_measurements.filter(category="heart_rate").first()
         viscosity = self.request.user.user_measurements.filter(category="viscosity").first()
         temperature = self.request.user.user_measurements.filter(category="temperature").first()
         if respiratory:
-            response.update({"respiratory": respiratory.value})
+            response.append({"title": "respiratory", "value": respiratory.value})
         if oxygen:
-            response.update({"oxygen": oxygen.value})
+            response.append({"title": "oxygen", "value": oxygen.value})
         if heart_rate:
-            response.update({"heart_rate": heart_rate.value})
+            response.append({"title": "heart_rate", "value": heart_rate.value})
         if viscosity:
-            response.update({"viscosity": viscosity.value})
+            response.append({"title": "viscosity", "value": viscosity.value})
         if temperature:
-            response.update({"temperature": temperature.value})
+            response.append({"title": "temperature", "value": temperature.value})
         return Response(response)
-
