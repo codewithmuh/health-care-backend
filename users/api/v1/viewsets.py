@@ -57,12 +57,12 @@ class UserProfileViewSet(ModelViewSet):
         queryset = User.objects.filter(id=self.request.user.id)
         return queryset
 
-    # def list(self, request, *args, **kwargs):
-    #     if not self.request.user.is_authenticated:
-    #         return Response({"error": "Please login first"}, status=status.HTTP_403_FORBIDDEN)
-    #     queryset = self.filter_queryset(self.get_queryset()).filter(id=self.request.user.id)
-    #     serializer = self.get_serializer(queryset.first(), many=False)
-    #     return Response(serializer.data)
+    def list(self, request, *args, **kwargs):
+        # if not self.request.user.is_authenticated:
+        #     return Response({"error": "Please login first"}, status=status.HTTP_403_FORBIDDEN)
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset.first(), many=False)
+        return Response(serializer.data)
     #
     # def retrieve(self, request, *args, **kwargs):
     #     instance = self.get_object()
