@@ -137,6 +137,7 @@ class SignupSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(read_only=True)
     age = serializers.SerializerMethodField(read_only=True)
+    credits = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = User
