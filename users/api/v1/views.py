@@ -1,5 +1,7 @@
 from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from rest_auth.registration.serializers import SocialLoginSerializer
 from rest_auth.registration.views import SocialLoginView, SocialConnectView
 from rest_framework import permissions
 # from rest_framework_simplejwt.views import TokenObtainPairView
@@ -13,49 +15,29 @@ from rest_framework import permissions
 
 
 class FacebookLoginAPI(SocialLoginView):
+    adapter_class = FacebookOAuth2Adapter
+    client_class = OAuth2Client
+    serializer_class = SocialLoginSerializer
     authentication_classes = []
     permission_classes = [permissions.AllowAny]
-    adapter_class = FacebookOAuth2Adapter
 
-    def post(self, request, *args, **kwargs):
-        request_type = self.request.GET.get("type")
-        self.request = request
-        self.serializer = self.get_serializer(data=self.request.data,
-                                              context={'request': request})
-        self.serializer.is_valid(raise_exception=True)
-
-        self.login()
-        response = self.get_response()
-        try:
-            if request_type == "login":
-                profile = response.data.get("user_detail")
-                if any([profile.get("timezone"), profile.get("phone_number"), profile.get("country_code")]):
-                    response.data["registered"] = True
-        except:pass
-        return response
+    def get_serializer(self, *args, **kwargs):
+        serializer_class = self.get_serializer_class()
+        kwargs['context'] = self.get_serializer_context()
+        return serializer_class(*args, **kwargs)
 
 
 class GoogleLoginAPI(SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+    client_class = OAuth2Client
+    serializer_class = SocialLoginSerializer
     authentication_classes = []
     permission_classes = [permissions.AllowAny]
-    adapter_class = GoogleOAuth2Adapter
 
-    def post(self, request, *args, **kwargs):
-        request_type = self.request.GET.get("type")
-        self.request = request
-        self.serializer = self.get_serializer(data=self.request.data,
-                                              context={'request': request})
-        self.serializer.is_valid(raise_exception=True)
-
-        self.login()
-        response = self.get_response()
-        try:
-            if request_type == "login":
-                profile = response.data.get("user_detail")
-                if any([profile.get("timezone"), profile.get("phone_number"), profile.get("country_code")]):
-                    response.data["registered"] = True
-        except:pass
-        return response
+    def get_serializer(self, *args, **kwargs):
+        serializer_class = self.get_serializer_class()
+        kwargs['context'] = self.get_serializer_context()
+        return serializer_class(*args, **kwargs)
 
 
 class FacebookLoginConnectAPI(SocialConnectView):

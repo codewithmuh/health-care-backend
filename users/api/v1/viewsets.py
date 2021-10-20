@@ -58,26 +58,9 @@ class UserProfileViewSet(ModelViewSet):
         return queryset
 
     def list(self, request, *args, **kwargs):
-        # if not self.request.user.is_authenticated:
-        #     return Response({"error": "Please login first"}, status=status.HTTP_403_FORBIDDEN)
         queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(queryset.first(), many=False)
         return Response(serializer.data)
-    #
-    # def retrieve(self, request, *args, **kwargs):
-    #     instance = self.get_object()
-    #     serializer = self.get_serializer(instance)
-    #     return Response(serializer.data)
-    #
-    # def partial_update(self, request, *args, **kwargs):
-    #     kwargs['partial'] = True
-    #     instance = self.get_object()
-    #     if not self.request.user.is_authenticated:
-    #         return Response({"error": "Please login first"}, status=status.HTTP_403_FORBIDDEN)
-    #     if instance.id == self.request.user.pk:
-    #         return self.update(request, *args, **kwargs)
-    #     else:
-    #         return Response({"error": "Only owner can update the details."}, status=status.HTTP_403_FORBIDDEN)
 
 
 class APKBuildViewSet(ReadOnlyModelViewSet):
